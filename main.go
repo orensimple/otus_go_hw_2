@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
+	"unicode"
 )
 
 func main() {
@@ -16,45 +18,33 @@ func main() {
 }
 
 func stringConvert(text string) string {
-	_, error := strconv.Atoi(string(text[0]))
-	if error == nil {
+	if unicode.IsDigit(rune(text[0])) {
 		return ""
-	} else {
-		var newText, symbolBuf string
-		var slashBuf bool
-		for _, runeValue := range text {
-			symbol := string(runeValue)
-			i, error := strconv.Atoi(symbol)
-			if error != nil {
-				if symbol != `\` {
-					newText = newText + symbol
-				} else if slashBuf == true {
-					newText = newText + symbol
-				}
-			} else {
-				if i > 0 {
-					if slashBuf != true {
-						for a := 2; a <= i; a++ {
-							newText = newText + symbolBuf
-						}
-					}
-				}
-				if slashBuf == true {
-					newText = newText + symbol
-				}
-
+	}
+	var symbolBuf string
+	var newText strings.Builder
+	var slashBuf bool
+	for _, runeValue := range text {
+		symbol := string(runeValue)
+		if !unicode.IsDigit(runeValue) {
+			if symbol != `\` || slashBuf {
+				newText.WriteString(symbol)
 			}
-			symbolBuf = symbol
-			if symbol == `\` {
-				if slashBuf == true {
-					slashBuf = false
-				} else {
-					slashBuf = true
-				}
-			} else {
-				slashBuf = false
+		} else {
+			count, _ := strconv.Atoi(symbol)
+			if count > 0 && !slashBuf {
+				newText.WriteString(strings.Repeat(symbolBuf, count-1))
+			}
+			if slashBuf {
+				newText.WriteString(symbol)
 			}
 		}
-		return newText
+		symbolBuf = symbol
+		if symbol == `\` && !slashBuf {
+			slashBuf = true
+		} else {
+			slashBuf = false
+		}
 	}
+	return newText.String()
 }
